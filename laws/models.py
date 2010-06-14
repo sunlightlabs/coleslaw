@@ -13,8 +13,8 @@ class Law(models.Model):
     #  ...
     #
     title = models.IntegerField()
-    section = models.IntegerField()
-    psection = models.CharField(max_length=32)
+    section = models.IntegerField(default=0)
+    psection = models.CharField(max_length=32, blank=True, default="")
     text = models.TextField()
 
     order = models.IntegerField()
