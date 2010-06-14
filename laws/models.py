@@ -2,9 +2,21 @@ from django.db import models
 from django.core.urlresolvers import reverse
 
 class Law(models.Model):
+    #
+    #  Note that there can be multiple entries with the same title, section,
+    #  and psection, because of the nested structure.
+    #   
+    #  Title 1, sec 13               # order 1
+    #     psection (a)(b)(c)         # order 2
+    #  Title 1, sec 13 continued...  # order 3
+    #     psection (a)(b)(d)         # order 4
+    #  ...
+    #
     title = models.IntegerField()
     section = models.IntegerField()
     psection = models.CharField(max_length=32)
+    text = models.TextField()
+
     order = models.IntegerField()
     references = models.ManyToManyField('Law')
 
@@ -24,4 +36,5 @@ class Law(models.Model):
 
     class Meta:
         ordering = order
+        unique_together = (("title", "section", "psection", "order"),)
 
