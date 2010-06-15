@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+{% for part in parts %}
+    <div style='display: block; margin-left: {{ part.level }}em; margin-bottom: 1em;'>
+        <div style='float: left; font-weight: bold;'>{{ part.name }}.</div>
+        <div style='float: left; margin-left: 1em; width: 33em;'>
+            {{part.text }}
+        </div>
+        <br style='clear: both;' />
+    </div>
+{% endfor %}
+{% endblock %}

@@ -1,10 +1,41 @@
+# -*- coding: utf-8 -*-
 import re
 import os
 import lxml.etree
 
 from django.core.management.base import BaseCommand
+from django.utils.encoding import force_unicode
 
 from laws.models import Law
+
+import htmlentitydefs
+
+##
+# Removes HTML or XML character references and entities from a text string.
+#
+# @param text The HTML (or XML) source text.
+# @return The plain text, as a Unicode string, if necessary.
+
+def unescape(text):
+    def fixup(m):
+        text = m.group(0)
+        if text[:2] == "&#":
+            # character reference
+            try:
+                if text[:3] == "&#x":
+                    return unichr(int(text[3:-1], 16))
+                else:
+                    return unichr(int(text[2:-1]))
+            except ValueError:
+                pass
+        else:
+            # named entity
+            try:
+                text = unichr(htmlentitydefs.name2codepoint[text[1:-1]])
+            except KeyError:
+                pass
+        return text # leave as is
+    return re.sub("&#?\w+;", fixup, text)
 
 class Command(BaseCommand):
     help = """Import the US legal code from Cornel's XML format."""
@@ -17,22 +48,30 @@ class Command(BaseCommand):
         dirname = args[0]
         self.ordering = 0
 
-#        self.import_xml("/home/tc1/Desktop/uscxml/uscode06/T06F00088.XML")
-#        return
+        self.import_xml("/home/tc1/Desktop/uscxml/uscode06/T06F00257.XML")
+        return
 
+        count = 0
         for root, dirs, files in os.walk(dirname):
             for filename in files:
                 if not filename.lower().endswith(".xml"):
                     continue
-                self.import_xml(os.path.join(root, filename))
+                path = os.path.join(root, filename)
+                count += 1
+                print path, "%.02f" % (count / 600.)
+                self.import_xml(path)
+
 
     def import_xml(self, filename):
         parser = lxml.etree.XMLParser(dtd_validation=False, load_dtd=False,
-                                      resolve_entities=False)
+                                      resolve_entities=False, encoding="utf8")
         with open(filename) as f:
-            print filename
             source = os.path.basename(filename)
-            xml = lxml.etree.fromstring(f.read(), parser=parser)
+            file_contents = unescape(f.read())
+            file_contents = re.sub('''^<\?xml version="1.0" encoding="UTF-8"\s*\??>''', 
+                    '', file_contents)
+            print file_contents
+            xml = lxml.etree.fromstring(file_contents, parser=parser)
 
             try:
                 self.title = xml.attrib['titlenum'].lstrip('0')
@@ -66,7 +105,7 @@ class Command(BaseCommand):
                       order=self.ordering, 
                       title=self.title,
                       section=self.section,
-                      text=xml.xpath('string(//section/head)'),
+                      text=unicode(xml.xpath('string(//section/head)')),
                       source=source)
             law.set_name()
             law.save()
@@ -115,7 +154,8 @@ class Command(BaseCommand):
                     ref_law = Law.objects.create(
                             title=title,
                             section=section,
-                            psection=ref_psec_id)
+                            psection=ref_psec_id,
+                            order=0)
                 else:
                     ref_law = matches[0]
                 ref_laws.append(ref_law)
