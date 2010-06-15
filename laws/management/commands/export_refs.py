@@ -10,7 +10,7 @@ class Command(BaseCommand):
     help = """Export reference structure of the US code."""
 
     def handle(self, *args, **options):
-        refs = {}
+        refs = []
         for law in Law.objects.exclude(title="", section="").filter(psection=""):
             if not law.name:
                 continue
@@ -22,8 +22,7 @@ class Command(BaseCommand):
                                  in sub_law.references.all()
                                  if ref.title and ref.section])
 
-            refs["%s.%s" % (law.title, law.section)] = all_refs
+            refs.append(["%s.%s" % (law.title, law.section), all_refs])
 
         with open('refs.json', 'w') as f:
             json.dump(refs, f)
-
