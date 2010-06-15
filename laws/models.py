@@ -14,12 +14,13 @@ class Law(models.Model):
     #     psection (a)(b)(d)         # order 4
     #  ...
     #
-    title = models.IntegerField()
+    title = models.CharField(max_length=8)
     section = models.CharField(max_length=32, blank=True, default="")
     psection = models.CharField(max_length=32, blank=True, default="")
     level = models.IntegerField(default=0)
     name = models.CharField(max_length=100, blank=True, default="")
     text = models.TextField()
+    source = models.CharField(max_length=255)
 
     order = models.IntegerField(default=0)
     references = models.ManyToManyField('Law')
@@ -37,7 +38,7 @@ class Law(models.Model):
     def set_name(self, psection_parts=None):
         self.name = unicode(self.title)
         if self.section:
-            self.name += u"§%i" % self.section
+            self.name += u"§%s" % self.section
             self.name += ''.join(psection_parts or [])
 
     class Meta:

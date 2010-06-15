@@ -1,67 +1,149 @@
 import re
+import os
+import lxml.etree
 
 from django.core.management.base import BaseCommand
+
 from laws.models import Law
-import lxml.etree
 
 class Command(BaseCommand):
     help = """Import the US legal code from Cornel's XML format."""
 
-    def handle(self, **options):
+    def handle(self, *args, **options):
+        if not len(args) > 0:
+            print "Please supply the directory of extracted XML files as the first argument."
+            return
+
+        dirname = args[0]
+        self.ordering = 0
+
+#        self.import_xml("/home/tc1/Desktop/uscxml/uscode06/T06F00088.XML")
+#        return
+
+        for root, dirs, files in os.walk(dirname):
+            for filename in files:
+                if not filename.lower().endswith(".xml"):
+                    continue
+                self.import_xml(os.path.join(root, filename))
+
+    def import_xml(self, filename):
         parser = lxml.etree.XMLParser(dtd_validation=False, load_dtd=False,
                                       resolve_entities=False)
-
-        with open('/Users/mike/Downloads/uscode19/T19F00927.XML') as f:
+        with open(filename) as f:
+            print filename
+            source = os.path.basename(filename)
             xml = lxml.etree.fromstring(f.read(), parser=parser)
 
-            self.title = int(xml.attrib['titlenum'])
-            self.section = int(xml.xpath('//section')[0].attrib['num'])
+            try:
+                self.title = xml.attrib['titlenum'].lstrip('0')
+            except KeyError:
+                return
 
-            self.ordering = 1
+            try:
+                title_section = xml.xpath('//hdsupnest')[0].text
+                match = re.match("TITLE (?P<title>\w+)\s*(?:-|&mdash;)\s*(?P<name>\w+)", 
+                        title_section)
+                if match:
+                    result = Law.objects.get_or_create(
+                                              title=match.group('title').lstrip('0'),
+                                              section="",
+                                              psection="",
+                                              defaults={
+                                                  'text': title_section,
+                                                  'order': self.ordering,
+                                                  'level': 0,
+                                              })
+                    self.ordering += 1
+            except IndexError:
+                pass
 
-            law = Law(level=0, order=0, title=self.title,
+            sections = xml.xpath('//section')
+            if len(sections) == 0:
+                return
+            self.section = sections[0].attrib['num']
+
+            law = Law(level=0, 
+                      order=self.ordering, 
+                      title=self.title,
                       section=self.section,
-                      text=xml.xpath('string(//section/head)'))
+                      text=xml.xpath('string(//section/head)'),
+                      source=source)
             law.set_name()
             law.save()
 
             for psection in xml.xpath('//section/sectioncontent/psection'):
-                self.parse_psection(psection, [])
+                self.parse_psection(psection, [], source)
 
-    def parse_psection(self, psection, parts):
-        self.ordering += 1
+    def parse_psection(self, psection, parts, source):
         parts.append(psection.xpath('enum')[0].text)
+        psection_id = psection.attrib['id']
 
-        law = Law(level=int(psection.attrib['lev']),
-                  order=self.ordering,
-                  title=self.title,
-                  section=self.section,
-                  psection=psection.attrib['id'],
-                  text=psection.xpath('string(text)'))
-        law.set_name(parts)
-        law.save()
-
+        # Get references
+        ref_laws = []
         for ref in psection.xpath('text/aref'):
             for subref in ref.xpath('subref'):
                 if subref.attrib['type'] == 'title':
-                    pass
+                    match = re.match( r"usc_sup_01_([^_])", 
+                            subref.attrib['target'])
+                    if match:
+                        (title,) = match.groups()
+                        title = title.lstrip('0')
+                        section = ""
+                        ref_psec_id = ""
+                    else:
+                        continue
+
                 elif subref.attrib['type'] in ['sec', 'psec']:
-                    (title, sec1, sec2, psec_id) = re.match(
+                    match = re.match(
                         r"usc_sec_(?P<title>\d+)_(?P<section>[^-]+)-*(?P<section2>[0-9A-Za-z]*)-?(?:\#(?P<psection>\w+))?",
-                        subref.attrib['target']).groups()
-
+                        subref.attrib['target'])
+                    if not match:
+                        continue
+                    (title, sec1, sec2, ref_psec_id) = match.groups()
+                    title = title.lstrip('0')
                     section = sec1.lstrip('0') + sec2.rstrip('0')
+                    ref_psec_id = ref_psec_id or ""
 
-                    ref_law, created = Law.objects.get_or_create(
-                        title=title,
-                        section=section,
-                        psection=psec_id or "")
-
-                    law.references.add(ref_law)
                 else:
-                    pass
+                    continue
 
-        for sub_psection in psection.xpath('psection'):
-            self.parse_psection(sub_psection, parts)
+                matches = Law.objects.filter(
+                    title=title,
+                    section=section,
+                    psection=ref_psec_id)
+                if len(matches) == 0:
+                    ref_law = Law.objects.create(
+                            title=title,
+                            section=section,
+                            psection=ref_psec_id)
+                else:
+                    ref_law = matches[0]
+                ref_laws.append(ref_law)
 
+        for sub_element in psection:
+            if sub_element.tag in ["text", "head"]:
+                self.ordering += 1
+                matches = Law.objects.filter(
+                        title=self.title,
+                        section=self.section,
+                        psection=psection_id)
+                if len(matches) == 1 and not matches[0].source:
+                    law = matches[0]
+                else:
+                    law = Law(
+                        title=self.title,
+                        section=self.section,
+                        psection=psection_id)
+                law.level = int(psection.attrib['lev'])
+                law.text = sub_element.text or ""
+                law.order = self.ordering
+                law.source = source
+                law.set_name(parts)
+                law.save()
+            elif sub_element.tag == "psection":
+                self.parse_psection(sub_element, parts, source)
+        if ref_laws:
+            first = Law.objects.filter(title=self.title, section=self.section, 
+                    psection=psection_id)[0]
+            first.references = ref_laws
         parts.pop()
