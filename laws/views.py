@@ -20,6 +20,26 @@ def show_law(request, title, section, psection=""):
     all_parts = Law.objects.filter(order__gte=start.order, 
             order__lte=end.order)
 
+    first_order = {}
+    second_order = {}
+    mappings = {}
+    for part in all_parts:
+        for reference in part.references.exclude(order=0):
+            first_order[reference.order] = reference
+            mappings[start.pk] = mappings.get(start.pk, [])
+            mappings[start.pk].append(reference.pk)
+            
+            for ref2 in reference.references.exclude(order=0):
+                second_order[ref2.order] = ref2
+                mappings[reference.pk] = mappings.get(reference.pk, [])
+                mappings[reference.pk].append(ref2)
+
+    first_order = [v for k,v in sorted(first_order.iteritems())]
+    second_order = [v for k,v in sorted(second_order.iteritems())]
+
     return render_to_response("laws/show.html", {
                 'parts': all_parts,
+                'first_order': first_order,
+                'second_order': second_order,
+                'mappings': mappings
             }, context_instance=RequestContext(request))

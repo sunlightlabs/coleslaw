@@ -26,7 +26,7 @@ class Law(models.Model):
     references = models.ManyToManyField('Law')
 
     def num_references(self):
-        return self.references.count()
+        return self.references.exclude(order=0).count()
 
     def get_absolute_url(self):
         return reverse("laws_show_law", 
