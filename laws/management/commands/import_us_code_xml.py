@@ -48,8 +48,8 @@ class Command(BaseCommand):
         dirname = args[0]
         self.ordering = 0
 
-        self.import_xml("/home/tc1/Desktop/uscxml/uscode06/T06F00257.XML")
-        return
+#        self.import_xml("/home/tc1/Desktop/uscxml/uscode06/T06F00257.XML")
+#        return
 
         count = 0
         for root, dirs, files in os.walk(dirname):
@@ -70,7 +70,7 @@ class Command(BaseCommand):
             file_contents = unescape(f.read())
             file_contents = re.sub('''^<\?xml version="1.0" encoding="UTF-8"\s*\??>''', 
                     '', file_contents)
-            print file_contents
+            file_contents = file_contents.replace("&", "&amp;")
             xml = lxml.etree.fromstring(file_contents, parser=parser)
 
             try:
@@ -114,7 +114,7 @@ class Command(BaseCommand):
                 self.parse_psection(psection, [], source)
 
     def parse_psection(self, psection, parts, source):
-        parts.append(psection.xpath('enum')[0].text)
+        parts.append(psection.xpath('string(enum)'))
         psection_id = psection.attrib['id']
 
         # Get references
