@@ -1,4 +1,4 @@
 dev.db
 *.pyc
 *.swp
-.sass-cache/*
+.sass-cache
