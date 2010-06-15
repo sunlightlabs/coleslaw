@@ -15,11 +15,13 @@ class Law(models.Model):
     #  ...
     #
     title = models.IntegerField()
-    section = models.IntegerField(default=0)
+    section = models.CharField(max_length=32, blank=True, default="")
     psection = models.CharField(max_length=32, blank=True, default="")
+    level = models.IntegerField(default=0)
+    name = models.CharField(max_length=100, blank=True, default="")
     text = models.TextField()
 
-    order = models.IntegerField()
+    order = models.IntegerField(default=0)
     references = models.ManyToManyField('Law')
 
     def num_references(self):
@@ -30,13 +32,15 @@ class Law(models.Model):
                 args=(self.title, self.section, self.psection))
 
     def __unicode__(self):
-        return u"%i§%i%s" % (
-                self.title, 
-                self.section, 
-                "".join(["(%s)" % o for o in split(self.psection, '_')])
-        )
+        return self.name
+
+    def set_name(self, psection_parts=None):
+        self.name = unicode(self.title)
+        if self.section:
+            self.name += u"§%i" % self.section
+            self.name += ''.join(psection_parts or [])
 
     class Meta:
-        ordering = order
+        ordering = ('order',)
         unique_together = (("title", "section", "psection", "order"),)
 
