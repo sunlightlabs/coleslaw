@@ -15,10 +15,10 @@ class Law(models.Model):
     #  ...
     #
     title = models.CharField(max_length=8)
-    section = models.CharField(max_length=32, blank=True, default="")
-    psection = models.CharField(max_length=32, blank=True, default="")
+    section = models.CharField(max_length=255, blank=True, default="")
+    psection = models.CharField(max_length=255, blank=True, default="")
     level = models.IntegerField(default=0)
-    name = models.CharField(max_length=100, blank=True, default="")
+    name = models.CharField(max_length=255, blank=True, default="")
     text = models.TextField()
     source = models.CharField(max_length=255)
 
