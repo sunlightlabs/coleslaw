@@ -101,14 +101,33 @@ class Command(BaseCommand):
                 return
             self.section = sections[0].attrib['num']
 
-            law = Law(level=0, 
-                      order=self.ordering, 
-                      title=self.title,
-                      section=self.section,
-                      text=unicode(xml.xpath('string(//section/head)')),
-                      source=source)
+            matches = Law.objects.filter(
+                title=self.title,
+                section=self.section,
+                psection="")
+            if matches:
+                law = matches[0]
+            else:
+                law = Law(title=self.title,
+                          section=self.section,
+                          psection="")
+            law.order = self.ordering
+            law.text = unicode(xml.xpath('string//section/head'))
+            law.source = source
             law.set_name()
             law.save()
+
+            for sect_text in xml.xpath('//section/sectioncontent/text'):
+                self.ordering += 1
+                l2 = Law(
+                    title=self.title,
+                    section=self.section,
+                    psection="",
+                    order=self.ordering,
+                    text=unicode(sect_text.xpath('string()')),
+                    source=source)
+                l2.set_name()
+                l2.save()
 
             for psection in xml.xpath('//section/sectioncontent/psection'):
                 self.parse_psection(psection, [], source)
@@ -175,7 +194,7 @@ class Command(BaseCommand):
                         section=self.section,
                         psection=psection_id)
                 law.level = int(psection.attrib['lev'])
-                law.text = sub_element.text or ""
+                law.text = unicode(sub_element.xpath('string()') or "")
                 law.order = self.ordering
                 law.source = source
                 law.set_name(parts)
