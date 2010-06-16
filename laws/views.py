@@ -28,11 +28,19 @@ def show_law(request, title, section, psection=""):
             first_order[reference.order] = reference
             mappings[start.pk] = mappings.get(start.pk, [])
             mappings[start.pk].append(reference.pk)
-            
+
             for ref2 in reference.references.exclude(order=0):
                 second_order[ref2.order] = ref2
                 mappings[reference.pk] = mappings.get(reference.pk, [])
                 mappings[reference.pk].append(ref2)
+
+            if not reference.psection and reference.section:
+                for sub_law in Law.objects.filter(title=reference.title,
+                                                  section=reference.section):
+                    for ref2 in sub_law.references.exclude(order=0):
+                        second_order[ref2.order] = ref2
+                        mappings[reference.pk] = mappings.get(reference.pk, [])
+                        mappings[reference.pk].append(ref2)
 
     first_order = [v for k,v in sorted(first_order.iteritems())]
     second_order = [v for k,v in sorted(second_order.iteritems())]
