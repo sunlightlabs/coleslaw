@@ -22,7 +22,7 @@ class Law(models.Model):
     text = models.TextField()
     source = models.CharField(max_length=255)
 
-    order = models.IntegerField(default=0)
+    order = models.IntegerField(default=0, db_index=True)
     references = models.ManyToManyField('Law')
 
     def num_references(self):
