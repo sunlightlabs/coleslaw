@@ -20,7 +20,7 @@ window.onload = link_refs;
     {% for ref in references %}
     <li>
     <a href="{{ ref.get_absolute_url}}?KeepThis=true&TB_iframe=true&modal=false&height=400&width=600"
-    id='r{{ ref.pk }}' class="thickbox">{{ ref.name }}</a>,
+    id='r{{ ref.pk }}'>{{ ref.name }}</a>,
     </li>
     {% endfor %}
   </ul>
