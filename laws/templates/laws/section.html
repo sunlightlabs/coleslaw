@@ -14,12 +14,19 @@ window.onload = link_refs;
 </script>
 {% endblock %}
 {% block content %}
-{{ section.text|safe }}
-
 <div id="references" onload='link_refs();'>
-  {% for ref in references %}
-  <a href="{{ ref.get_absolute_url}}?KeepThis=true&TB_iframe=true&modal=false&height=400&width=600"
-  id='r{{ ref.pk }}' class="thickbox">{{ ref.name }}</a>,
-  {% endfor %}
-  </div>
+  <h3>References:</h3>
+  <ul>
+    {% for ref in references %}
+    <li>
+    <a href="{{ ref.get_absolute_url}}?KeepThis=true&TB_iframe=true&modal=false&height=400&width=600"
+    id='r{{ ref.pk }}' class="thickbox">{{ ref.name }}</a>,
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+
+<div id="main">
+  {{ section.text|safe }}
+</div>
 {% endblock %}

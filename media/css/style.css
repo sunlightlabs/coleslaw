@@ -138,3 +138,16 @@ span.aref {
     margin-left: 1.5em;
     margin-top: .5em;
 }
+
+#references {
+    float: left;
+    margin-top: 1em;
+    margin-left: 0.5em;
+    width: 100px;
+}
+
+#main {
+    float: left;
+    margin-left: 20px;
+    width:750px;
+}
