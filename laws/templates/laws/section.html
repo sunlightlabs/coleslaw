@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block head %}
+<script type="text/javascript" src="http://jquery.com/demo/thickbox/thickbox-code/thickbox-compressed.js" />
+<link rel="stylesheet" href="http://jquery.com/demo/thickbox/thickbox-code/thickbox.css" type="text/css" media="screen" />
+<script type="text/javascript">
+function link_refs() {
+  $("a.sec").addClass("thickbox").attr("href", function(index, href) {
+    return href +
+"/?KeepThis=true&TB_iframe=true&modal=false&height=400&width=600";
+  });
+  tb_init("a.thickbox");
+}
+window.onload = link_refs;
+</script>
+{% endblock %}
+{% block content %}
+{{ section.text|safe }}
+
+<div id="references" onload='link_refs();'>
+  {% for ref in references %}
+  <a href="{{ ref.get_absolute_url}}?KeepThis=true&TB_iframe=true&modal=false&height=400&width=600"
+  id='r{{ ref.pk }}' class="thickbox">{{ ref.name }}</a>,
+  {% endfor %}
+  </div>
+{% endblock %}
