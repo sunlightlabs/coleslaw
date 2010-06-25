@@ -4,7 +4,7 @@
 <link rel="stylesheet" href="http://jquery.com/demo/thickbox/thickbox-code/thickbox.css" type="text/css" media="screen" />
 <script type="text/javascript">
 function link_refs() {
-  $("a.sec").addClass("thickbox").attr("href", function(index, href) {
+  $("a.sec, a.psec, a.title").addClass("thickbox").attr("href", function(index, href) {
     return href +
 "/?KeepThis=true&TB_iframe=true&modal=false&height=400&width=600";
   });
