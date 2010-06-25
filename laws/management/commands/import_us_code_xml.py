@@ -51,10 +51,16 @@ class Command(BaseCommand):
 #        self.import_xml("/home/tc1/Desktop/uscxml/uscode06/T06F00257.XML")
 #        return
 
+        xslt_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                                 '..', '..', 'section.xslt'))
+        print xslt_path
+        with open(xslt_path) as f:
+            self.xslt = lxml.etree.XSLT(lxml.etree.fromstring(f.read()))
+
         count = 0
         for root, dirs, files in os.walk(dirname):
             for filename in files:
-                if not filename.lower().endswith(".xml"):
+                if not filename.lower().endswith(".xml") or 'TOC' in filename:
                     continue
                 path = os.path.join(root, filename)
                 count += 1
@@ -112,7 +118,10 @@ class Command(BaseCommand):
                           section=self.section,
                           psection="")
             law.order = self.ordering
-            law.text = unicode(xml.xpath('string//section/head'))
+            body = self.xslt(xml).xpath('//xhtml:body/xhtml:div',
+                                        namespaces={
+                    'xhtml': 'http://www.w3.org/1999/xhtml'})[0]
+            law.text = unicode(lxml.etree.tostring(body))
             law.source = source
             law.set_name()
             law.save()
