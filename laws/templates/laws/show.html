@@ -1,4 +1,11 @@
 {% extends "base.html" %}
+{% block head %}
+<script type="text/javascript" src="http://jquery.com/demo/thickbox/thickbox-code/thickbox-compressed.js" />
+<link rel="stylesheet" href="http://jquery.com/demo/thickbox/thickbox-code/thickbox.css" type="text/css" media="screen" />
+<script type="text/javascript">
+
+</script>
+{% endblock %}
 {% block content %}
 {% for part in parts %}
     <div style='display: block; margin-left: {{ part.level }}em; margin-bottom: 1em;'>
@@ -9,20 +16,22 @@
         <br style='clear: both;' />
     </div>
 {% endfor %}
-<hr />
-{{ first_order|length }}
+<hr /><p style="margin-left: 15px; margin-bottom: 15px">
+{{ first_order|length }} first-level references:
 {% for ref in first_order %}
-    <a href='{{ ref.get_absolute_url }}' id='r{{ ref.pk }}'>{{ ref.name }}</a>, 
-{% endfor %}
-<hr />
-{{ second_order|length }}
+    <a href='{{ ref.get_absolute_url }}?KeepThis=true&TB_iframe=true&modal=false&height=400&width=600' id='r{{ ref.pk }}' class="thickbox">{{ ref.name }}</a>, 
+{% endfor %}</p>
+<hr /><p style="margin-left: 15px; margin-bottom: 15px">
+{{ second_order|length }} second-level references:
 {% for ref in second_order %}
-    <a href='{{ ref.get_absolute_url }}' id='r{{ ref.pk }}'>{{ ref.name }}</a>, 
-{% endfor %}
+    <a href='{{ ref.get_absolute_url }}' id='r{{ ref.pk }}' class="thickbox">{{ ref.name }}</a>, 
+{% endfor %}</p>
 <hr />
+{% comment %}
 {% for k, v in mappings.items %}
 r{{ k }} =&gt; r{{ v }}<br />
 {% endfor %}
+{% endcomment %}
 
 
 {% endblock %}

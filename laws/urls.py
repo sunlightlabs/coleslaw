@@ -1,6 +1,7 @@
 from django.conf.urls.defaults import *
 
 urlpatterns = patterns('',
-    url('^(?P<title>\w+)/(?P<section>\w+)/(?P<psection>.+)?$', 
-        'laws.views.show_law', name='laws_show_law')
+    url('^target/(?P<target>.+)/$', 'laws.views.target', name='laws_target'),
+    url('^(?P<title>\w+)/(?P<section>\w+)/$',
+        'laws.views.section', name='laws_section'),
 )

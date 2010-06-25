@@ -29,8 +29,10 @@ class Law(models.Model):
         return self.references.exclude(order=0).count()
 
     def get_absolute_url(self):
-        return reverse("laws_show_law", 
-                args=(self.title, self.section, self.psection))
+        url = reverse("laws_section", args=(self.title, self.section))
+        if self.psection:
+            url += "#" + self.psection
+        return url
 
     def __unicode__(self):
         return self.name
@@ -44,4 +46,3 @@ class Law(models.Model):
     class Meta:
         ordering = ('order',)
         unique_together = (("title", "section", "psection", "order"),)
-
