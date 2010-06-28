@@ -73,7 +73,8 @@ def title_index(request, title):
     }, context_instance=RequestContext(request))
 
 def index(request):
-    titles = Law.objects.filter(section="", psection="")
+    titles = sorted(Law.objects.filter(section="", psection=""),
+                    cmp=lambda l, r: cmp(int(l.title), int(r.title)))
     return render_to_response("laws/index.html", {
         'titles': titles,
     }, context_instance=RequestContext(request))
