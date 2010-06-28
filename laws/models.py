@@ -29,12 +29,17 @@ class Law(models.Model):
         return self.references.exclude(order=0).count()
 
     def get_absolute_url(self):
-        url = reverse("laws_section", args=(self.title, self.section))
-        if self.psection:
-            url += "#" + self.psection
-        return url
+        if self.section == "" and self.psection == "":
+            return reverse("laws_title_index", args=([self.title]))
+        else:
+            url = reverse("laws_section", args=(self.title, self.section))
+            if self.psection:
+                url += "#" + self.psection
+            return url
 
     def __unicode__(self):
+        if self.section == "" and self.psection == "":
+            return self.title
         return self.name
 
     def set_name(self, psection_parts=None):

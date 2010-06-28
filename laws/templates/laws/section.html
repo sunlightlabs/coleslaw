@@ -1,17 +1,65 @@
 {% extends "base.html" %}
 {% block head %}
-<script type="text/javascript" src="http://jquery.com/demo/thickbox/thickbox-code/thickbox-compressed.js" />
-<link rel="stylesheet" href="http://jquery.com/demo/thickbox/thickbox-code/thickbox.css" type="text/css" media="screen" />
-<script type="text/javascript">
-function link_refs() {
-  $("a.sec, a.psec, a.title").addClass("thickbox").attr("href", function(index, href) {
-    return href +
-"/?KeepThis=true&TB_iframe=true&modal=false&height=400&width=600";
-  });
-  tb_init("a.thickbox");
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js"></script>
+<script type="text/javascript">//<![CDATA[
+
+
+var spinner = "<img src='{{ MEDIA_URL }}/img/spinner.gif' alt='spinner' />";
+function attachHovers(par) { 
+    $(par).find("a.sec, a.psec").each(function() {
+        var sec = $(document.createElement("div")).attr('class', 'secbubble');
+        $(this).before(sec);
+        $(this).remove();
+        sec.append(this);
+    });
+    $(par).find("div.secbubble").hover(function() {
+        var div = $(document.createElement("div")).attr('class', 'hoverbubble').html(spinner);
+        $(this).append(div);
+        var offset = $(this).offset();
+        var newOffset = {
+            left: Math.max(0, offset.left - 250),
+            top: offset.top + 15
+        };
+        div.offset(newOffset);
+        div.offset(newOffset); // GAH! Chrome/safari bug; we have to do this twice?!
+        // rewrite link for direct access
+        var href = $(this).find("a").attr('href');
+        href = href.replace("#", "");
+        $.get(href, {'context': 'hoverbubble'}, function(data) {
+            if (div) {
+                div.html(data);
+                attachHovers(div);
+            }
+        });
+    }, function() {
+        $(this).find(".hoverbubble").fadeOut(function() { $(this).remove(); });
+    });
 }
-window.onload = link_refs;
-</script>
+$(document).ready(function() {
+    $("body").ajaxError(function(evt, xhr, options) {
+        if (xhr.status == 404) {
+            $(".hoverbubble").html("Section not found.");
+        }
+    });
+    attachHovers("body");
+});
+
+
+//]]></script>
+<style type='text/css'>
+    div.hoverbubble {
+        background-color: white;
+        border: 1px solid black;
+        width: 500px;
+        position: absolute;
+        z-index: 2;
+        padding: 1em;
+    }
+    div.secbubble {
+        border-bottom: 1px solid green;
+        display: inline;
+    }
+</style>
 {% endblock %}
 {% block content %}
 <div id="references" onload='link_refs();'>
@@ -19,8 +67,7 @@ window.onload = link_refs;
   <ul>
     {% for ref in references %}
     <li>
-    <a href="{{ ref.get_absolute_url}}?KeepThis=true&TB_iframe=true&modal=false&height=400&width=600"
-    id='r{{ ref.pk }}'>{{ ref.name }}</a>,
+    <a href="{{ ref.get_absolute_url}}">{{ ref.name }}</a>,
     </li>
     {% endfor %}
   </ul>

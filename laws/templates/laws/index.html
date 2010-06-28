@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Coleslaw: Exploring the US Code{% endblock %}
+{% block content %}
+<h1>Titles</h1>
+<ul style='margin-left: 2em;'>
+{% for title in titles %}
+<li><a href='{{ title.get_absolute_url }}'>{{ title }}</a></li>
+{% endfor %}
+</ul>
+
+{% endblock content %}
+
