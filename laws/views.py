@@ -42,7 +42,7 @@ def section(request, title, section, psection=None):
 
     all_parts = Law.objects.filter(order__gt=start.order,
                                    order__lte=end.order)
-    
+
 
     first_order = {}
     mappings = {}
@@ -51,8 +51,20 @@ def section(request, title, section, psection=None):
             first_order[reference.order] = reference
             mappings[start.pk] = mappings.get(start.pk, [])
             mappings[start.pk].append(reference.pk)
-            
-    first_order = [v for k,v in sorted(first_order.iteritems())]
+
+    def ref_cmp(l, r):
+        if l.title == r.title:
+            if l.section == r.section:
+                return cmp(l.psection, r.psection)
+            lmatch = re.match(r"^(\d+)(.*)", l.section)
+            rmatch = re.match(r"^(\d+)(.*)", r.section)
+            if lmatch.group(1) == rmatch.group(1):
+                return cmp(lmatch.group(2), rmatch.group(2))
+            return cmp(int(lmatch.group(1)), int(rmatch.group(1)))
+        return cmp(int(l.title), int(r.title))
+
+    first_order = sorted([v for k,v in sorted(first_order.iteritems())],
+                         cmp=ref_cmp)
 
     return render_to_response("laws/section.html", {
             'section': section,
