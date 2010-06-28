@@ -1,5 +1,8 @@
 import re
 
+import lxml.etree
+import lxml.html
+
 from django.shortcuts import render_to_response
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.template import RequestContext
@@ -35,7 +38,18 @@ def section(request, title, section, psection=None):
         raise Http404
 
     if request.GET.get('context', None) == "hoverbubble":
-        return HttpResponse(section.text)
+         if section.psection:
+             try:
+                 parent = Law.objects.filter(title=section.title,
+                                             section=section.section,
+                                             psection="")[0]
+                 psec = lxml.html.fromstring(parent.text).xpath(
+                     'id("%s")' % section.psection)[0]
+                 return HttpResponse(lxml.etree.tostring(psec))
+             except:
+                 print "TSRATRS"
+                 return HttpResponse(section.text)
+         return HttpResponse(section.text)
 
     start = sections[0]
     end = sections[-1]
